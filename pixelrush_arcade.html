@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#090b18"><title>PixelRush Arcade</title>
+<style>
+:root{--bg:#090b18;--panel:#14182b;--panel2:#1c2240;--ink:#f4f5ff;--muted:#aab0d0;--purple:#9a72ff;--cyan:#55e6e0;--pink:#ff6d9d}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 80% -10%,#30205d 0,transparent 35%),var(--bg);color:var(--ink);font:16px system-ui,-apple-system,Segoe UI,sans-serif}
+header{padding:22px 18px 12px;max-width:1000px;margin:auto;display:flex;align-items:center;justify-content:space-between}
+.brand{font-weight:900;font-size:25px;letter-spacing:-1px}.brand span{color:var(--cyan)}.pill{border:1px solid #343b60;border-radius:30px;padding:8px 12px;color:var(--muted);font-size:12px}
+main{max-width:1000px;margin:auto;padding:10px 18px 50px}.hero{padding:28px 22px;border:1px solid #34345f;border-radius:25px;background:linear-gradient(125deg,#211a45,#142d45);overflow:hidden;position:relative}
+.kicker{color:var(--cyan);font-size:11px;font-weight:800;letter-spacing:2px}.hero h1{font-size:clamp(36px,8vw,62px);line-height:.98;letter-spacing:-3px;margin:12px 0}.hero h1 span{color:var(--pink)}.hero p{color:#c5c9e2;max-width:480px;line-height:1.5}.search{width:100%;margin:20px 0;padding:14px 16px;border-radius:14px;border:1px solid #343b60;background:#11162a;color:white;font-size:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:13px}.game{background:linear-gradient(150deg,#1b2140,#111629);border:1px solid #30385e;border-radius:18px;padding:16px;text-align:left;color:white;min-height:142px;cursor:pointer}.game:active{transform:scale(.98)}.emoji{font-size:30px}.game h3{margin:10px 0 3px;font-size:17px}.game small{color:var(--muted)}
+#play{display:none;margin-top:18px;background:var(--panel);border:1px solid #343b60;border-radius:22px;padding:16px}
+.playtop{display:flex;justify-content:space-between;align-items:center;gap:10px}.playtop h2{margin:0;font-size:22px}.btn{border:0;border-radius:12px;padding:11px 15px;background:var(--purple);color:#100d20;font-weight:800;font-size:14px;cursor:pointer}.btn.alt{background:#293052;color:white;border:1px solid #414b78}
+canvas{display:block;width:100%;max-width:560px;height:auto;aspect-ratio:1/1;background:#080d1c;border:1px solid #343b60;border-radius:15px;margin:15px auto;touch-action:none}
+.controls{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;margin:12px 0}.controls button{min-width:55px;min-height:48px}
+.note{text-align:center;color:var(--muted);font-size:13px}.hidden{display:none!important}
+footer{text-align:center;color:#737b9e;font-size:12px;padding:25px}
+@media(min-width:700px){.grid{grid-template-columns:repeat(3,1fr)}.hero{padding:42px}}
+</style></head><body>
+<header><div class="brand">⚡ pixelrush<span>.</span></div><div class="pill">ARCADE • PLAY FREE</div></header>
+<main>
+<section class="hero"><div class="kicker">YOUR MINI ARCADE</div><h1>Pick a game.<br><span>Have a blast.</span></h1><p>Quick games, no downloads and no account needed. Tap a game below and play right here.</p></section>
+<input id="search" class="search" placeholder="🔎  Search games..." aria-label="Search games">
+<section class="grid" id="games">
+<button class="game" data-game="snake"><div class="emoji">🐍</div><h3>Snake</h3><small>Eat, grow, don't crash</small></button>
+<button class="game" data-game="pong"><div class="emoji">🏓</div><h3>Pong</h3><small>Beat the computer</small></button>
+<button class="game" data-game="breakout"><div class="emoji">🧱</div><h3>Breakout</h3><small>Smash the bricks</small></button>
+<button class="game" data-game="2048"><div class="emoji">🔢</div><h3>2048</h3><small>Join the numbers</small></button>
+<button class="game" data-game="memory"><div class="emoji">🧠</div><h3>Memory Match</h3><small>Find matching pairs</small></button>
+<button class="game" data-game="dodge"><div class="emoji">🚀</div><h3>Space Dodge</h3><small>Avoid the falling stars</small></button>
+</section>
+<section id="play">
+<div class="playtop"><h2 id="gameTitle">Game</h2><button class="btn alt" id="back">← All games</button></div>
+<p id="status" class="note">Tap Start to play.</p><canvas id="board" width="420" height="420"></canvas>
+<div class="controls" id="controls"></div>
+<div class="controls"><button class="btn" id="start">Start / Restart</button></div>
+<p class="note" id="help">Use the buttons or your keyboard.</p>
+</section></main><footer>PixelRush Arcade • Made for fun</footer>
+<script>
+const $=s=>document.querySelector(s), canvas=$('#board'),ctx=canvas.getContext('2d');let current='',timer=null, state={}, keys={};
+const games={snake:'Snake',pong:'Pong',breakout:'Breakout','2048':'2048',memory:'Memory Match',dodge:'Space Dodge'};
+function stop(){if(timer)clearInterval(timer);timer=null}
+function show(name){stop();current=name;$('#games').classList.add('hidden');$('#search').classList.add('hidden');$('#play').style.display='block';$('#gameTitle').textContent=games[name];$('#status').textContent='Tap Start / Restart to play.';$('#controls').innerHTML='';ctx.clearRect(0,0,420,420);$('#help').textContent=name==='2048'?'Swipe or use arrow keys.':name==='memory'?'Tap two cards to find a pair.':'Use the on-screen controls or arrow keys.';if(name==='snake'||name==='pong'||name==='breakout'||name==='dodge')makeControls(name);if(name==='memory')drawMemoryPreview();if(name==='2048')draw2048Preview()}
+function back(){stop();current='';$('#play').style.display='none';$('#games').classList.remove('hidden');$('#search').classList.remove('hidden')}
+$('#back').onclick=back;
+function makeControls(n){let labels=n==='pong'?['▲','▼']:n==='dodge'?['◀','▶']:['↑','←','↓','→'];labels.forEach((v)=>{let b=document.createElement('button');b.className='btn alt';b.textContent=v;b.onpointerdown=e=>{e.preventDefault();keys[v]=true;moveControl(v)};b.onpointerup=b.onpointerleave=()=>keys[v]=false;$('#controls').append(b)})}
+function moveControl(v){if(current==='snake'){let d={'↑':[0,-1],'↓':[0,1],'←':[-1,0],'→':[1,0]}[v];if(d)state.dir=d}if(current==='pong'){if(v==='▲')state.py=Math.max(0,state.py-24);if(v==='▼')state.py=Math.min(340,state.py+24)}if(current==='dodge'){if(v==='◀')state.x=Math.max(10,state.x-24);if(v==='▶')state.x=Math.min(390,state.x+24)}}
+function draw(){ctx.fillStyle='#080d1c';ctx.fillRect(0,0,420,420)}
+function start(){stop();if(current==='snake')snake();if(current==='pong')pong();if(current==='breakout')breakout();if(current==='2048')new2048();if(current==='memory')memory();if(current==='dodge')dodge()}
+$('#start').onclick=start;
+document.addEventListener('keydown',e=>{let m={ArrowUp:'↑',ArrowDown:'↓',ArrowLeft:'←',ArrowRight:'→'};if(m[e.key]){e.preventDefault();if(current==='snake')moveControl(m[e.key]);else if(current==='pong')moveControl(m[e.key]==='↑'?'▲':m[e.key]==='↓'?'▼':m[e.key]);else moveControl(m[e.key])}if(current==='2048')move2048(e.key)});
+function snake(){state={body:[[10,10],[9,10],[8,10]],dir:[1,0],food:[15,10],score:0};$('#status').textContent='Score: 0';timer=setInterval(()=>{let h=[state.body[0][0]+state.dir[0],state.body[0][1]+state.dir[1]];if(h[0]<0||h[0]>=21||h[1]<0||h[1]>=21||state.body.some(p=>p[0]===h[0]&&p[1]===h[1])){stop();$('#status').textContent='Game over! Score: '+state.score;return}state.body.unshift(h);if(h[0]===state.food[0]&&h[1]===state.food[1]){state.score++;state.food=[Math.floor(Math.random()*21),Math.floor(Math.random()*21)];$('#status').textContent='Score: '+state.score}else state.body.pop();draw();ctx.fillStyle='#55e6e0';state.body.forEach(p=>ctx.fillRect(p[0]*20+1,p[1]*20+1,18,18));ctx.fillStyle='#ff6d9d';ctx.fillRect(state.food[0]*20+2,state.food[1]*20+2,16,16)},125)}
+function pong(){state={x:205,y:205,dx:4,dy:3,py:165,cy:165,score:0};timer=setInterval(()=>{state.x+=state.dx;state.y+=state.dy;if(state.y<8||state.y>412)state.dy*=-1;if(state.x<25&&state.y>state.py&&state.y<state.py+90){state.dx=Math.abs(state.dx);state.score++}if(state.x>395&&state.y>state.cy&&state.y<state.cy+90)state.dx=-Math.abs(state.dx);state.cy+=((state.y-45)-state.cy)*.06;if(state.x<0||state.x>420){stop();$('#status').textContent='Round over! Score: '+state.score;return}draw();ctx.fillStyle='#55e6e0';ctx.fillRect(10,state.py,10,90);ctx.fillStyle='#ff6d9d';ctx.fillRect(400,state.cy,10,90);ctx.beginPath();ctx.arc(state.x,state.y,9,0,7);ctx.fillStyle='white';ctx.fill();ctx.fillStyle='white';ctx.font='22px system-ui';ctx.fillText(state.score,195,35)},25)}
+function breakout(){state={x:210,y:330,dx:3,dy:-4,p:165,bricks:Array.from({length:4},(_,r)=>Array.from({length:7},(_,c)=>({x:12+c*57,y:35+r*25,on:true}))),score:0};canvas.onpointermove=e=>{let r=canvas.getBoundingClientRect();state.p=(e.clientX-r.left)*420/r.width-45};timer=setInterval(()=>{state.x+=state.dx;state.y+=state.dy;if(state.x<8||state.x>412)state.dx*=-1;if(state.y<8)state.dy=4;if(state.y>385&&state.x>state.p&&state.x<state.p+90)state.dy=-4;state.bricks.flat().forEach(b=>{if(b.on&&state.x>b.x&&state.x<b.x+50&&state.y>b.y&&state.y<b.y+15){b.on=false;state.dy=Math.abs(state.dy);state.score++;$('#status').textContent='Bricks: '+state.score}});if(state.y>420){stop();$('#status').textContent='Game over! Bricks: '+state.score}if(state.bricks.flat().every(b=>!b.on)){stop();$('#status').textContent='You cleared the bricks!'}draw();state.bricks.flat().forEach(b=>{if(b.on){ctx.fillStyle='#9a72ff';ctx.fillRect(b.x,b.y,49,14)}});ctx.fillStyle='#55e6e0';ctx.fillRect(state.p,390,90,12);ctx.beginPath();ctx.arc(state.x,state.y,8,0,7);ctx.fillStyle='white';ctx.fill()},25)}
+let board=[];
+function addTile(){let a=[];board.forEach((r,y)=>r.forEach((v,x)=>{if(!v)a.push([x,y])}));if(a.length){let [x,y]=a[Math.floor(Math.random()*a.length)];board[y][x]=Math.random()<.9?2:4}}
+function draw2048Preview(){draw();ctx.fillStyle='#aab0d0';ctx.font='20px system-ui';ctx.fillText('Press Start to begin 2048',85,210)}
+function draw2048(){draw();let colors={0:'#202844',2:'#e9edff',4:'#cbd7ff',8:'#9a72ff',16:'#7556df',32:'#ff6d9d',64:'#f38b68',128:'#55bcae',256:'#35a9a4',512:'#278d9c',1024:'#266d91',2048:'#f1d66a'};board.forEach((r,y)=>r.forEach((v,x)=>{let px=12+x*101,py=12+y*101;ctx.fillStyle=colors[v]||'#243c74';ctx.fillRect(px,py,93,93);if(v){ctx.fillStyle=v<=4?'#171a30':'white';ctx.font='bold 27px system-ui';ctx.textAlign='center';ctx.fillText(v,px+46,py+57)}}));ctx.textAlign='start'}
+function new2048(){board=Array.from({length:4},()=>[0,0,0,0]);addTile();addTile();$('#status').textContent='Join tiles to reach 2048';draw2048()}
+function move2048(k){if(current!=='2048'||!board.length)return;let dir={ArrowLeft:0,ArrowUp:1,ArrowRight:2,ArrowDown:3}[k];if(dir===undefined)return;let old=JSON.stringify(board);for(let i=0;i<4;i++){let line=dir%2===0?board[i].slice():board.map(r=>r[i]);if(dir===2||dir===3)line.reverse();line=line.filter(Boolean);for(let j=0;j<line.length-1;j++)if(line[j]===line[j+1]){line[j]*=2;line.splice(j+1,1)}while(line.length<4)line.push(0);if(dir===2||dir===3)line.reverse();if(dir%2===0)board[i]=line;else line.forEach((v,j)=>board[j][i]=v)}if(old!==JSON.stringify(board))addTile();draw2048()}
+function memory(){let vals=['🍉','🚀','🐸','⭐','🎮','🍕','🍉','🚀','🐸','⭐','🎮','🍕'].sort(()=>Math.random()-.5),opened=[],matched=0;draw();ctx.fillStyle='white';ctx.font='17px system-ui';ctx.fillText('Tap the 12 tiles below',120,210);$('#controls').innerHTML='';vals.forEach((v,i)=>{let b=document.createElement('button');b.className='btn alt';b.style.width='62px';b.style.height='55px';b.textContent='?';b.onclick=()=>{if(opened.length===2||b.dataset.done)return;b.textContent=v;opened.push([b,v]);if(opened.length===2){if(opened[0][1]===opened[1][1]){opened.forEach(x=>x[0].dataset.done='1');matched+=2;opened=[];if(matched===12)$('#status').textContent='You matched every pair! 🎉'}else setTimeout(()=>{opened.forEach(x=>x[0].textContent='?');opened=[]},650)}};$('#controls').append(b)});$('#status').textContent='Find all 6 pairs!'}
+function drawMemoryPreview(){draw();ctx.fillStyle='white';ctx.font='20px system-ui';ctx.fillText('Tap Start to shuffle the cards',70,210)}
+function dodge(){state={x:210,rocks:[],score:0};timer=setInterval(()=>{if(Math.random()<.055)state.rocks.push({x:Math.random()*390,y:-10});state.rocks.forEach(r=>r.y+=5);state.rocks=state.rocks.filter(r=>r.y<430);if(state.rocks.some(r=>Math.abs(r.x-state.x)<22&&r.y>365&&r.y<410)){stop();$('#status').textContent='Game over! Score: '+state.score;return}state.score++;$('#status').textContent='Score: '+state.score;draw();ctx.fillStyle='#ff6d9d';state.rocks.forEach(r=>{ctx.beginPath();ctx.arc(r.x,r.y,10,0,7);ctx.fill()});ctx.fillStyle='#55e6e0';ctx.beginPath();ctx.moveTo(state.x,365);ctx.lineTo(state.x-18,405);ctx.lineTo(state.x+18,405);ctx.fill()},35)}
+$('#search').addEventListener('input',e=>{let q=e.target.value.toLowerCase();document.querySelectorAll('.game').forEach(b=>b.style.display=b.innerText.toLowerCase().includes(q)?'block':'none')});
+document.querySelectorAll('.game').forEach(b=>b.onclick=()=>show(b.dataset.game));
+let sx=0,sy=0;canvas.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});canvas.addEventListener('touchend',e=>{if(current!=='2048')return;let dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;move2048(Math.abs(dx)>Math.abs(dy)?(dx>0?'ArrowRight':'ArrowLeft'):(dy>0?'ArrowDown':'ArrowUp'))},{passive:true});
+</script></body></html>
